@@ -15,7 +15,6 @@ class ScheduleApp:
         self.root.geometry("1200x800")
 
         self.root.iconphoto(False, tk.PhotoImage(file='.resources/icon.png'))
-        # ----------------------
 
         # --- Główne ramki aplikacji ---
         self.control_frame = Frame(root, padx=10, pady=10)
@@ -49,8 +48,7 @@ class ScheduleApp:
 
     def load_data(self):
         # Ścieżka do folderu z plikami ICS
-        # Upewnij się, że ta ścieżka jest poprawna dla Twojego systemu
-        folder_path = "/home/remek2go/Downloads/calendars"
+        folder_path = "./calendars"
         self.schedule = []
         self.ics_files = []
 
