@@ -59,17 +59,27 @@ class ScheduleApp:
             return
 
         for ics_file in self.ics_files:
-            with open(os.path.join(folder_path, ics_file), "r", encoding="utf-8") as file:
-                calendar = Calendar(file.read())
-                for event in calendar.events:
-                    self.schedule.append((event.begin, event.end, event.name, ics_file))
+            try:
+                with open(os.path.join(folder_path, ics_file), "r", encoding="utf-8") as file:
+                    calendar = Calendar(file.read())
+                    for event in calendar.events:
+                        self.schedule.append((event.begin, event.end, event.name, ics_file))
+            except Exception as e:
+                print(f"Błąd podczas wczytywania pliku {ics_file}: {e}")
         
         self.schedule.sort()
 
     def prepare_schedule_for_view(self):
-        start_date = min(event[0] for event in self.schedule).date()
-        end_date = start_date + datetime.timedelta(days=6)
+        # Użyj dzisiejszej daty do określenia bieżącego tygodnia
+        today = datetime.date.today()
+        # Znajdź poniedziałek bieżącego tygodnia (weekday() 0 = poniedziałek, 6 = niedziela)
+        start_date = today - datetime.timedelta(days=today.weekday())
+        # Koniec tygodnia (niedziela)
+        end_date = start_date + datetime.timedelta(days=6) 
+        
+        # Filtruj wszystkie wydarzenia, aby pokazać tylko te z bieżącego tygodnia
         self.weekly_schedule = [e for e in self.schedule if start_date <= e[0].date() <= end_date]
+        
         self.days = ["Pon", "Wt", "Śr", "Czw", "Pt"]
         self.day_map = {day: i for i, day in enumerate(self.days)}
         self.file_colors = {file: plt.cm.tab10(i % 10) for i, file in enumerate(self.ics_files)}
@@ -104,7 +114,7 @@ class ScheduleApp:
             filtered_events = [event for event in filtered_events if not event[2].startswith("W")]
 
         if not filtered_events:
-            self.ax.text(0.5, 0.5, "Brak wydarzeń do wyświetlenia", ha='center', va='center')
+            self.ax.text(0.5, 0.5, "Brak wydarzeń do wyświetlenia\n(w bieżącym tygodniu)", ha='center', va='center')
             self.canvas.draw()
             return
             
@@ -118,6 +128,9 @@ class ScheduleApp:
         used_files = set()
 
         for day, events in day_events_filtered.items():
+            if not events: # Pomiń dni bez wydarzeń
+                continue
+                
             events.sort(key=lambda e: e[0])
             hour_events = {}
             for event in events:
@@ -149,7 +162,7 @@ class ScheduleApp:
         self.ax.set_xlim(7, 20)
         self.ax.set_xlabel("Godzina")
         self.ax.set_ylabel("Dzień tygodnia")
-        self.ax.set_title("Harmonogram zajęć na tydzień")
+        self.ax.set_title("Harmonogram zajęć na bieżący tydzień")
         self.ax.legend(title="Pliki ICS", loc="upper right")
         self.fig.tight_layout()
 
